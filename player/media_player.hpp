@@ -4,10 +4,13 @@
 #include <iostream>
 #include "player.h"
 #include "thread.hpp"
+#include "audio_dec.hpp"
+#include "alsa_pcm.hpp"
 //using namespace std;
 
 class MediaPlayer: public Thread
 {
+public:
 	//typedef std::shared_ptr<MediaPlayer> Ptr;
 	MediaPlayer();
 	~MediaPlayer();
@@ -16,6 +19,8 @@ class MediaPlayer: public Thread
 	void onLoop();									// 维护一个命令队列
 	void onAAC(const AdtsFrame &data);
 	//std::shared_ptr<AudioDec> _aacDec;////aac软件解码器
+	AudioDec *audioDec_;
+	AlsaPcm *alsaPcm_;
 };
 
 #endif

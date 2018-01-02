@@ -12,7 +12,7 @@ public:
 	bool init();
 	bool inputData(const char *pcData, int iLen);	// 只管数据进来,由内部线程来parse数据
 	// 设置环形buffer
-	void onGetAAC(const char *pcData, int iLen, uint32_t ui32TimeStamp);
+	void onGetAAC(const uint8_t *pcData, int iLen, uint32_t ui32TimeStamp);
 	void onLoop();							//内部线程
 private:
 	int m_iSampleRate = 44100;
@@ -20,6 +20,6 @@ private:
 	int m_iChannel = 1;
 	AdtsFrame m_adts;
 	char rtmpUrl_[256];
-	//AudioDec audioDec_;
+	AudioDec audioDec_;
 };
 #endif

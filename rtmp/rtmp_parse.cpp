@@ -13,7 +13,7 @@
 RtmpParser::RtmpParser(const char *url)
 {
 	strcpy(rtmpUrl_, url);
-	//audioDec_ = new AudioDec();
+	
 	init();
 }
 
@@ -27,9 +27,15 @@ bool RtmpParser::inputData(const char *pcData, int iLen)    // 只管数据进来,由内
     return true;
 }
 // 设置环形buffer
-void RtmpParser::onGetAAC(const char *pcData, int iLen, uint32_t ui32TimeStamp)
+void RtmpParser::onGetAAC(const uint8_t *pcData, int iLen, uint32_t ui32TimeStamp)
 {
-
+	//添加adts头
+	memcpy(m_adts.data + 7, pcData, iLen);
+	m_adts.aac_frame_length = 7 + iLen;
+    m_adts.timeStamp = ui32TimeStamp;
+    writeAdtsHeader(m_adts, m_adts.data);
+	// 解aac
+	m_adts.aac_frame_length = 7;
 }
 void RtmpParser::onLoop()
 {
@@ -120,6 +126,7 @@ void RtmpParser::onLoop()
 			     rtmp->m_read.dataType,
 			     tagDataLen);
                 makeAdtsHeader(&tempBuf[13], m_adts);
+				getAACInfo(m_adts, m_iSampleRate, m_iChannel);
             }
             else if(0xaf == tempBuf[11] && 0x01 == tempBuf[12])
             {
@@ -128,18 +135,7 @@ void RtmpParser::onLoop()
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
-                //添加adts头
-            	memcpy(m_adts.data + 7, tempBuf + 13, tagDataLen - 2);
-            	m_adts.aac_frame_length = 7 + tagDataLen - 2;
-                m_adts.timeStamp = rtmp->m_read.timestamp;
-                writeAdtsHeader(m_adts, m_adts.data);
-            	{
-            		
-            		//if (onAudio) {
-            			//onAudio(m_adts);
-            		//}
-            	}
-            	m_adts.aac_frame_length = 7;
+            	onGetAAC(tempBuf + 13, tagDataLen - 2, rtmp->m_read.timestamp);
             }
         }
         else if(TAG_TYPE_VIDEO == tempBuf[0])           // 视频帧

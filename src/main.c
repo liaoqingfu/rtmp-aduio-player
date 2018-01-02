@@ -26,8 +26,10 @@
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
 #include "rtmp_parse.hpp"
-//#include "audio_dec.hpp"
-
+#include "audio_dec.hpp"
+#include "media_player.hpp"
+#include "log_util.hpp"
+#include "alsa_pcm.hpp"
 using namespace std;
 
 int InitSockets()
@@ -44,9 +46,12 @@ void CleanupSockets()
 int main(int argc, char* argv[])
 {
 	RtmpParser *rtmpParser;
+	MediaPlayer mediaPlayer;
+	//AlsaPcm alsaPcm;
 	//AudioDec audioDec_;
 	InitSockets();
-	
+	initLog4cpp();
+	FunEntry();
 	double duration=-1;
 	int nRead;
 	//is live stream ?

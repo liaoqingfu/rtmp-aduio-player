@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/rtmp-player.dir/main.c.o  -o rtmp-player  -L/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/third_lib/faad/lib -rdynamic -Wl,-Bstatic -lmp4ff -lfaad ../audio/libaudio.a ../rtmp/librtmp_src.a ../util/libutil.a ../player/libplayer.a -Wl,-Bdynamic -lrtmp -lpthread -Wl,-rpath,/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/third_lib/faad/lib 

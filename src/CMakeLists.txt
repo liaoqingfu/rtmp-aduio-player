@@ -21,12 +21,12 @@ SET(Boost_LIBRARIES boost_system boost_date_time)
 #LINK_DIRECTORIES(../third_lib/faad/lib)
 
 
-LINK_DIRECTORIES(/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/third_lib/faad/lib)
+LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/third_lib/faad/lib2)
 #TBD_MGR_COMM_SRC SDK公共源码
 #################################################################
 #AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR} SOURCE_FILES)
 #ADD_EXECUTABLE(IntelligentDevice ${SOURCE_FILES})
 ADD_EXECUTABLE(rtmp-player  main.c)
 
-TARGET_LINK_LIBRARIES(rtmp-player libmp4ff.a libfaad.a audio rtmp_src util player rtmp pthread )
-
+#TARGET_LINK_LIBRARIES(rtmp-player libmp4ff.a libfaad.a audio rtmp_src util player rtmp pthread )
+TARGET_LINK_LIBRARIES(rtmp-player  faad asound audio rtmp_src util player rtmp pthread boost_system boost_date_time)
