@@ -1,8 +1,9 @@
+#include "media_player.hpp"
 MediaPlayer::MediaPlayer()
 {
 
 }
-virtual MediaPlayer::~MediaPlayer()
+MediaPlayer::~MediaPlayer()
 {}
 void MediaPlayer::play(const char* strUrl)                  // 播放接口
 {}
@@ -11,9 +12,10 @@ void MediaPlayer::pause(bool bPause)
 void MediaPlayer::onLoop()
 {}
 
-void MediaPlayer::onAAC(const AdtsFrame &data) {
+void MediaPlayer::onAAC(const AdtsFrame &data) 
+{
 
-
+/*
     if (!_aacDec) {
         _aacDec.reset(new AudioDec());
         _aacDec->Init(data.data);
@@ -24,6 +26,7 @@ void MediaPlayer::onAAC(const AdtsFrame &data) {
            // _pcmBuf.append((char *)pcm,pcmLen);
     }
     // 发送给pcm buffer队列
+    */
 }
 
 

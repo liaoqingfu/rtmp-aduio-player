@@ -10,8 +10,10 @@ SET(CMAK_CXX_COMPILER g++)
 add_compile_options(-std=c++11)
 
 # Add header file include directories
-include_directories(./ ./audio ./player)
+
 
 ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(audio)
 ADD_SUBDIRECTORY(rtmp)
-
+ADD_SUBDIRECTORY(util)
+ADD_SUBDIRECTORY(player)

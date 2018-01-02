@@ -1,5 +1,5 @@
-#ifndef SRC_PLAYER_PLAYER_H_
-#define SRC_PLAYER_PLAYER_H_
+#ifndef _PLAYER_H_
+#define _PLAYER_H_
 
 #include <stdint.h>
 #include <string>

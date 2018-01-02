@@ -19,10 +19,15 @@
  */
 #include <iostream>
 #include <cstring>
+#include <unistd.h>
+
      
 
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
+#include "rtmp_parse.hpp"
+//#include "audio_dec.hpp"
+
 using namespace std;
 
 int InitSockets()
@@ -38,6 +43,8 @@ void CleanupSockets()
 
 int main(int argc, char* argv[])
 {
+	RtmpParser *rtmpParser;
+	//AudioDec audioDec_;
 	InitSockets();
 	
 	double duration=-1;
@@ -69,8 +76,13 @@ int main(int argc, char* argv[])
         strcpy(rtmpUrl,argv[1]);
         RTMP_LogPrintf("user url = %s\n", rtmpUrl);
 	}
-	
-	
+	rtmpParser = new RtmpParser(rtmpUrl);
+	while(1)
+	{
+		sleep(1);
+	}
+
+	return 0;
 	/* set log level */
 	//RTMP_LogLevel loglvl=RTMP_LOGDEBUG;
 	//RTMP_LogSetLevel(loglvl);

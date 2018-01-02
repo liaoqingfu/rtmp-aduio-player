@@ -1,0 +1,2 @@
+/usr/bin/ar qc libaudio.a  CMakeFiles/audio.dir/alsa_pcm.cpp.o CMakeFiles/audio.dir/audio_dec.cpp.o
+/usr/bin/ranlib libaudio.a

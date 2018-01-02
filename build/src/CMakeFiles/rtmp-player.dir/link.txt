@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/rtmp-player.dir/main.c.o  -o rtmp-player  -L/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/third/lib/alsa -rdynamic ../rtmp/librtmp_src.a -lrtmp -Wl,-rpath,/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/third/lib/alsa 

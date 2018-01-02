@@ -1,0 +1,17 @@
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/src/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/src/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/src/CMakeFiles/rtmp-player.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/audio/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/audio/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/audio/CMakeFiles/audio.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/rtmp/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/rtmp/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/rtmp/CMakeFiles/rtmp_src.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/util/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/util/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/util/CMakeFiles/util.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/player/CMakeFiles/edit_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/player/CMakeFiles/rebuild_cache.dir
+/mnt/hgfs/ffmpeg/rtmp/rtmp-aduio-player/b/player/CMakeFiles/player.dir

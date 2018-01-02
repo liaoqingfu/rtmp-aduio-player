@@ -1,8 +1,0 @@
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/CMakeFiles/edit_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/CMakeFiles/rebuild_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/src/CMakeFiles/edit_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/src/CMakeFiles/rebuild_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/src/CMakeFiles/rtmp-player.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/rtmp/CMakeFiles/edit_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/rtmp/CMakeFiles/rebuild_cache.dir
-/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/build/rtmp/CMakeFiles/rtmp_src.dir

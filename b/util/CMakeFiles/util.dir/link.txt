@@ -1,0 +1,2 @@
+/usr/bin/ar qc libutil.a  CMakeFiles/util.dir/log_util.cpp.o CMakeFiles/util.dir/tb_buffer.cpp.o CMakeFiles/util.dir/tb_shared_buffer.cpp.o CMakeFiles/util.dir/thread.cpp.o
+/usr/bin/ranlib libutil.a
