@@ -1,0 +1,2 @@
+/usr/bin/ar qc librtmp.a  CMakeFiles/rtmp.dir/rtmp_parse.cpp.o
+/usr/bin/ranlib librtmp.a

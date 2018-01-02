@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/cycle_buffer.cpp
+cycle_buffer.hpp
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/cycle_buffer.hpp
+assert.h
+-
+memory.h
+-
+
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/cycle_buffer.hpp
+
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/rtmp_parse.cpp
+iostream
+-
+cstring
+-
+rtmp_parse.hpp
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/rtmp_parse.hpp
+librtmp/rtmp.h
+-
+librtmp/log.h
+-
+
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/rtmp_parse.hpp
+player.h
+/mnt/hgfs/qingfu/ffmpeg/qt_project/rtmp-aduio-player/rtmp/player.h
+
