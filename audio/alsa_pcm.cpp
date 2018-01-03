@@ -21,8 +21,12 @@ AlsaPcm::AlsaPcm()
     ,cache_max_size_(100)
     ,mad_push_count_(0)
 {
-        InitAlsa();
-        Init();
+    InitAlsa();
+    Init();
+    //SetVolume(100);
+    ifile = fopen("temp.pcm", "wb");
+    if(!ifile)
+        LogError("fopen failed"); 
 }
 
 AlsaPcm::~AlsaPcm()
@@ -30,6 +34,8 @@ AlsaPcm::~AlsaPcm()
     FunEntry();
     Release();
     ReleaseAlsa();
+    if(ifile)
+    fclose(ifile);
     FunExit();
 }
 
@@ -41,8 +47,13 @@ int AlsaPcm::IsCanPush()
 int AlsaPcm::Push(void * data, int len)
 {
     int ret = E_OK;
+    int writeLen = 0;
     static int err_count = 0;
-
+    // FunEntry();
+    if((writeLen=fwrite(data, 1, len, ifile)) != len)
+    {
+        LogError("writeLen = %d, len = %d", writeLen, len);    
+    }
     if(GetAlsaQueueSize() < cache_max_size_ )
     {
         TBBufferPtr buff( TBBuffer::CreateInstance());
@@ -56,13 +67,14 @@ int AlsaPcm::Push(void * data, int len)
     else
     {
         ret = E_ERR;
-        //LogInfo("queueSize = %d/%d overflow", err_count, GetAlsaQueueSize());
+        LogInfo("queueSize = %d/%d overflow", err_count, GetAlsaQueueSize());
         if(++err_count > cache_max_size_ )
         {
             LogError("overflow too match,err:%d/%d, mad_push_count = %d, pcm_write_count = %d", 
                     err_count , cache_max_size_, mad_push_count_, pcm_write_count_);
         }
     }
+    //FunExit();
     return ret;
 }
 
@@ -181,7 +193,8 @@ void AlsaPcm::onLoop()
 int AlsaPcm::InitAlsa()
 {
     int ret = 0, openCnt = 0;
-    ret = snd_pcm_open(&pcm_handle_,/* "hw:0,0"*/"default", SND_PCM_STREAM_PLAYBACK, 0);
+    ret = snd_pcm_open(&pcm_handle_, "default", SND_PCM_STREAM_PLAYBACK, 0);
+  
     if(ret < 0)
     {
         LogError ("open PCM device failed  %s !", snd_strerror(ret));
@@ -621,22 +634,22 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
         pcm_params_ = NULL;
     }
 
-    snd_pcm_hw_params_malloc(&pcm_params_);
-    ret = snd_pcm_hw_params_any(pcm_handle_, pcm_params_);
+    snd_pcm_hw_params_malloc(&pcm_params_);                     //分配params结构体
+    ret = snd_pcm_hw_params_any(pcm_handle_, pcm_params_);      //初始化params
     if (ret < 0)
     {
         LogError("snd_pcm_hw_params_any error: %s !\n", snd_strerror(ret));
         return;
     }
 
-    ret = snd_pcm_hw_params_set_access(pcm_handle_, pcm_params_, SND_PCM_ACCESS_RW_INTERLEAVED);
+    ret = snd_pcm_hw_params_set_access(pcm_handle_, pcm_params_, SND_PCM_ACCESS_RW_INTERLEAVED);    //初始化访问权限
     if (ret < 0)
     {
         LogError("snd_pcm_params_set_access error: %s !\n", snd_strerror(ret));
         return;
     }
 
-    ret = snd_pcm_hw_params_set_format(pcm_handle_, pcm_params_, (snd_pcm_format_t)fmt);
+    ret = snd_pcm_hw_params_set_format(pcm_handle_, pcm_params_, (snd_pcm_format_t)fmt);        //设置16位采样精度 
     if (ret < 0)
     {
         LogError("snd_pcm_params_set_format error: %s !\n", snd_strerror(ret));
@@ -645,7 +658,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
 
     fmt_ = fmt;
 
-    ret = snd_pcm_hw_params_set_channels(pcm_handle_, pcm_params_, channels);
+    ret = snd_pcm_hw_params_set_channels(pcm_handle_, pcm_params_, channels);                   //设置声道,1表示单声>道，2表示立体声        
     if (ret < 0)
     {
         LogError("snd_pcm_params_set_channels error: %s !\n", snd_strerror(ret));
@@ -656,7 +669,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
 
     int dir=0;
 
-    ret = snd_pcm_hw_params_set_rate_near(pcm_handle_, pcm_params_, &samplerate, &dir);
+    ret = snd_pcm_hw_params_set_rate_near(pcm_handle_, pcm_params_, &samplerate, &dir);     //设置>频率
     if (ret < 0)
     {
         LogError("snd_pcm_hw_params_set_rate_near error: %s !\n", snd_strerror(ret));
@@ -664,6 +677,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     }
     sample_rate_ = samplerate;
 
+   
 	ret = snd_pcm_hw_params_get_buffer_time_max(pcm_params_, &buffer_time, NULL);
     if (ret < 0) {
         LogError("Unable to retrieve buffer time: %s\n", snd_strerror(ret));
@@ -671,12 +685,13 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     }
     if (buffer_time > 500000)
     buffer_time = 500000;
-	/* set buffer time */
+	// set buffer time 
 	ret = snd_pcm_hw_params_set_buffer_time_near(pcm_handle_, pcm_params_, &buffer_time, 0);
 	if (ret < 0) {
 		LogError("Unable to set buffer time %i for playback: %s\n", buffer_time, snd_strerror(ret));
 		//return err;
 	}
+	
 
     ret = snd_pcm_hw_params(pcm_handle_, pcm_params_);
     if (ret < 0)
@@ -692,7 +707,8 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     }
 
     snd_pcm_sw_params_malloc(&pcm_params_sw_);
-    /* set software parameters */
+   
+    // set software parameters 
     ret = snd_pcm_sw_params_current(pcm_handle_, pcm_params_sw_);
     if (ret < 0)
     {
@@ -708,8 +724,8 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     LogInfo("frames %d !\n", frames);
 
     //ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, frames*2);
-    /**
-     */
+    
+  
     ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, 16384);        //the value(16384) is  suit for pc
     if (ret < 0)
     {
@@ -720,6 +736,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     {
         LogError("unable set sw params: %s !\n", snd_strerror(ret));
     }
+    
 }
 
 int AlsaPcm::GetPcmWriteCount()

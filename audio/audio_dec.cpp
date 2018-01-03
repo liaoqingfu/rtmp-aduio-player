@@ -24,29 +24,39 @@
 
 #include "audio_dec.hpp"
 #include "neaacdec.h"
+#include "log_util.hpp"
 
 AudioDec::AudioDec(void) {
 	// TODO Auto-generated constructor stub
+	FunEntry();
 	_handle=nullptr;
 	samplebit=16;
 }
 
 AudioDec::~AudioDec(void) {
 	// TODO Auto-generated destructor stub
-	if(_handle != nullptr){
+	FunEntry();
+	if(_handle != nullptr)
+	{
 		NeAACDecClose((NeAACDecHandle)_handle);
 		_handle =nullptr;
 	}
 }
 
-bool AudioDec::Init(const void *adtshed,int hedlen) {
+bool AudioDec::Init(const void *adtshed,int hedlen) 
+{
+    FunEntry();
 	_handle = NeAACDecOpen();
-	if(_handle == nullptr){
+	if(_handle == nullptr)
+	{
+	    LogError("NeAACDecOpen failed");
 		return false;
 	}
+	
 	char err = NeAACDecInit((NeAACDecHandle)_handle, ( unsigned char *)adtshed, hedlen, &samplerate, &channels);
 	if (err != 0)
 	{
+	    LogError("NeAACDecInit failed");
 		return false;
 	}
 	return true;
@@ -54,10 +64,16 @@ bool AudioDec::Init(const void *adtshed,int hedlen) {
 }
 
 int AudioDec::InputData(const void *data, int len, unsigned char** pOutBuffer) {
+    uint8_t *pcmData = (uint8_t *)data;
 	NeAACDecFrameInfo hInfo;
 	NeAACDecHandle handle = (NeAACDecHandle)_handle;
-	* pOutBuffer=(unsigned char*)NeAACDecDecode(handle, &hInfo, (unsigned char*)data,len);
-	if (!((hInfo.error == 0) && (hInfo.samples > 0))){
+	//FunEntry();
+	//LogInfo("%02x %02x %02x %02x %02x %02x, len = %d", pcmData[0], pcmData[1], pcmData[2], pcmData[3],
+	//    pcmData[4], pcmData[5], pcmData[6], len);
+	*pOutBuffer=(unsigned char*)NeAACDecDecode(handle, &hInfo, (unsigned char*)data,len);
+	if (!((hInfo.error == 0) && (hInfo.samples > 0)))
+	{
+	    LogError("NeAACDecDecode failed");
 		return 0;
 	}
 	return hInfo.samples*hInfo.channels;

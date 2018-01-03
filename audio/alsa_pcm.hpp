@@ -53,5 +53,6 @@ private:
     int cache_max_size_;
 	int mad_push_count_;
     int pcm_write_count_;
+	FILE* ifile = NULL;
 };
 #endif

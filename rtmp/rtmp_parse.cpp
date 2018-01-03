@@ -13,7 +13,7 @@
 RtmpParser::RtmpParser(const char *url)
 {
 	strcpy(rtmpUrl_, url);
-	
+	mediaPlayer_ =  new MediaPlayer();
 	init();
 }
 
@@ -29,12 +29,15 @@ bool RtmpParser::inputData(const char *pcData, int iLen)    // 只管数据进来,由内
 // 设置环形buffer
 void RtmpParser::onGetAAC(const uint8_t *pcData, int iLen, uint32_t ui32TimeStamp)
 {
+    uint8_t *pcm;
 	//添加adts头
 	memcpy(m_adts.data + 7, pcData, iLen);
 	m_adts.aac_frame_length = 7 + iLen;
     m_adts.timeStamp = ui32TimeStamp;
     writeAdtsHeader(m_adts, m_adts.data);
+    //audioDec_->InputData(m_adts.data, m_adts.aac_frame_length, &pcm);
 	// 解aac
+	mediaPlayer_->onAAC(m_adts);
 	m_adts.aac_frame_length = 7;
 }
 void RtmpParser::onLoop()
@@ -87,7 +90,7 @@ void RtmpParser::onLoop()
         RTMP_Free(rtmp);
         return;
     }
-    nRead=RTMP_Read(rtmp,buf,9);
+    nRead=RTMP_Read(rtmp,buf,13);
     RTMP_LogPrintf("%c%c%c\n", buf[0], buf[1],buf[2]);
     RTMP_LogPrintf("Receive: %5dByte, Total: %5.2fkB, timestamp = %d, dataType = %d, buflen = %d\n",nRead,countbufsize*1.0/1024, 
 		    rtmp->m_read.timestamp,
@@ -106,13 +109,14 @@ void RtmpParser::onLoop()
 		tagDataLen |= tempBuf[2];
 		tagDataLen <<= 8;
 		tagDataLen |= tempBuf[3];
+
 		/*
-		RTMP_LogPrintf("Receive: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
-		    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
+		RTMP_LogPrintf("Receive: %5dByte, buf[0] = 0x%02x,%02x %02x %02x, %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
+		    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3], tempBuf[11], tempBuf[12],
 		    rtmp->m_read.timestamp,
 		     rtmp->m_read.dataType,
 		     tagDataLen);
-		     */
+		*/     
         // 解析flag
         if(TAG_TYPE_AUDIO == tempBuf[0])                // 音频帧
         {
@@ -130,11 +134,13 @@ void RtmpParser::onLoop()
             }
             else if(0xaf == tempBuf[11] && 0x01 == tempBuf[12])
             {
+                /*
             	RTMP_LogPrintf("audio data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
+			     */
             	onGetAAC(tempBuf + 13, tagDataLen - 2, rtmp->m_read.timestamp);
             }
         }
@@ -165,5 +171,7 @@ void RtmpParser::onLoop()
         RTMP_Free(rtmp);
         rtmp=NULL;
     }   
+
+    delete mediaPlayer_;
 }
 

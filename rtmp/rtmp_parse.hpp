@@ -4,6 +4,8 @@
 #include "player.h"
 #include "thread.hpp"
 #include "audio_dec.hpp"
+#include "media_player.hpp"
+
 class RtmpParser:public Thread
 {
 public:
@@ -20,6 +22,6 @@ private:
 	int m_iChannel = 1;
 	AdtsFrame m_adts;
 	char rtmpUrl_[256];
-	AudioDec audioDec_;
+	MediaPlayer *mediaPlayer_;
 };
 #endif

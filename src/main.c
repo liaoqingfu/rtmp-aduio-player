@@ -47,8 +47,10 @@ int main(int argc, char* argv[])
 {
 	RtmpParser *rtmpParser;
 	MediaPlayer mediaPlayer;
-	//AlsaPcm alsaPcm;
-	//AudioDec audioDec_;
+	AlsaPcm *alsaPcm = new AlsaPcm();
+	AudioDec *audioDec_= new AudioDec();
+	delete alsaPcm;
+	delete audioDec_;
 	InitSockets();
 	initLog4cpp();
 	FunEntry();

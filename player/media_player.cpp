@@ -4,6 +4,7 @@
 MediaPlayer::MediaPlayer()
 {
 	audioDec_ = nullptr;
+	alsaPcm_ = nullptr;
 }
 MediaPlayer::~MediaPlayer()
 {
@@ -21,9 +22,9 @@ void MediaPlayer::onLoop()
 
 void MediaPlayer::onAAC(const AdtsFrame &data) 
 {
-
-
-	if (!audioDec_) {
+    //FunEntry();
+	if (!audioDec_) 
+	{
 		audioDec_ = new AudioDec();
 		audioDec_->Init(data.data);
 	}
@@ -31,17 +32,19 @@ void MediaPlayer::onAAC(const AdtsFrame &data)
 	int pcmLen = audioDec_->InputData(data.data, data.aac_frame_length, &pcm);
 	if(pcmLen)
 	{
+	    //LogDebug("alsa alsaPcm_ = 0x%x", alsaPcm_);
 		if(!alsaPcm_)
 		{
 			 alsaPcm_ = new AlsaPcm();
 		}
-		 if(alsaPcm_->Push(pcm, pcmLen) != E_OK)
+		//LogDebug("Push pcmLen = %d", pcmLen);
+	    if(alsaPcm_->Push(pcm, pcmLen) != E_OK)
 		{
 			LogError("alsa buffer full");
 		}
 	}
 	// 发送给pcm buffer队列
-  
+    //FunExit();
 }
 
 

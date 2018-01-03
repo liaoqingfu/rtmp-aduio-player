@@ -29,4 +29,4 @@ LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/third_lib/faad/lib2)
 ADD_EXECUTABLE(rtmp-player  main.c)
 
 #TARGET_LINK_LIBRARIES(rtmp-player libmp4ff.a libfaad.a audio rtmp_src util player rtmp pthread )
-TARGET_LINK_LIBRARIES(rtmp-player  faad asound audio rtmp_src util player rtmp pthread boost_system boost_date_time)
+TARGET_LINK_LIBRARIES(rtmp-player   audio rtmp_src util player rtmp pthread boost_system boost_date_time)
