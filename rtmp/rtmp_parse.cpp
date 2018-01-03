@@ -100,6 +100,7 @@ void RtmpParser::onLoop()
 		     rtmp->m_read.buflen);
 
     unsigned int tagDataLen  = 0;
+	unsigned int timeStamp  = 0;
     countbufsize = 0;
     nRead = 0;
     while(true)
@@ -124,8 +125,15 @@ void RtmpParser::onLoop()
 		tagDataLen |= tempBuf[2];
 		tagDataLen <<= 8;
 		tagDataLen |= tempBuf[3];
-
-        
+		
+        timeStamp = 0;
+		timeStamp = tempBuf[7];
+		timeStamp <<= 8;
+		timeStamp = tempBuf[4];
+		timeStamp <<= 8;
+		timeStamp |= tempBuf[5];
+		timeStamp <<= 8;
+		timeStamp |= tempBuf[6];
 		/*
 		RTMP_LogPrintf("Receive: %5dByte, buf[0] = 0x%02x,%02x %02x %02x, %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 		    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3], tempBuf[11], tempBuf[12],
@@ -153,13 +161,13 @@ void RtmpParser::onLoop()
             else if(0xaf == tempBuf[11] && 0x01 == tempBuf[12])
             {
                /*
-            	RTMP_LogPrintf("audio data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
-			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
+            	RTMP_LogPrintf("audio data: %5dByte, buf[0] = 0x%02x, timestamp = %d, timeStamp = %d, tagDataLen = %d\n",nRead, 
+			    tempBuf[0], 
 			    rtmp->m_read.timestamp,
-			     rtmp->m_read.dataType,
+			     timeStamp,
 			     tagDataLen);
 			    */
-            	onGetAAC(tempBuf + 13, tagDataLen - 2, rtmp->m_read.timestamp);
+            	onGetAAC(tempBuf + 13, tagDataLen - 2, timeStamp);
             }
         }
         else if(TAG_TYPE_VIDEO == tempBuf[0])           //  ”∆µ÷°
