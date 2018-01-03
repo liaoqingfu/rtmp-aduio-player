@@ -71,6 +71,9 @@ void makeAdtsHeader(const uint8_t *strAudioCfg,AdtsFrame &adts) {
 	sampling_frequency_index = ((cfg1 & 0x07) << 1) | (cfg2 >> 7);
 	channel_configuration = (cfg2 & 0x7F) >> 3;
 
+	printf("sampling_frequency_index = %d, %d, channel_configuration = %d\n", sampling_frequency_index, 
+	    samplingFrequencyTable[sampling_frequency_index], channel_configuration);
+
 	adts.syncword = 0x0FFF;
 	adts.id = 0;
 	adts.layer = 0;
@@ -88,8 +91,10 @@ void makeAdtsHeader(const uint8_t *strAudioCfg,AdtsFrame &adts) {
 	adts.no_raw_data_blocks_in_frame = 0;
 }
 
-void getAACInfo(const AdtsFrame &adts,int &iSampleRate,int &iChannel){
-
+void getAACInfo(const AdtsFrame &adts,int &iSampleRate,int &iChannel)
+{
+    iSampleRate = samplingFrequencyTable[adts.sf_index];
+	iChannel = adts.channel_configuration;
 }
 bool getAVCInfo(const string& strSps,int &iVideoWidth, int &iVideoHeight, float  &iVideoFps) {
 

@@ -32,19 +32,29 @@ public:
 	bool Init(const void *adtshed, int hedlen = 7);
 	int InputData(const void *data, int len, unsigned char **pOutBuffer);
 	unsigned char getChannels() const {
-		return channels;
+		return channels_;
 	}
 	unsigned long getSamplerate() const {
-		return samplerate;
+		return samplerate_;
 	}
 	unsigned char getSamplebit() const {
-		return samplebit;
+		return samplebit_;
+	}
+
+	void setChannels(unsigned char channels)  {
+		channels_ = channels;
+	}
+	void setSamplerate(unsigned long samplerate)  {
+		samplerate_ = samplerate;
+	}
+	void setSamplebit(unsigned char samplebit)  {
+		samplebit_ = samplebit;
 	}
 private:
 	void *_handle;
-	unsigned long samplerate;
-	unsigned char channels;
-	unsigned char samplebit;
+	unsigned long samplerate_;
+	unsigned char channels_;
+	unsigned char samplebit_;
 };
 
 #endif /* AUDIODEC_H_ */

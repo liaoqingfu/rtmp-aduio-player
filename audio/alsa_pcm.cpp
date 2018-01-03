@@ -17,7 +17,7 @@ AlsaPcm::AlsaPcm()
     ,mixer_handle_(0)
     ,volume_(40)
     ,cacheing_(true)
-    ,cache_min_size_(50)
+    ,cache_min_size_(20)
     ,cache_max_size_(100)
     ,mad_push_count_(0)
 {
@@ -56,13 +56,13 @@ int AlsaPcm::Push(void * data, int len)
     }
     if(GetAlsaQueueSize() < cache_max_size_ )
     {
-        TBBufferPtr buff( TBBuffer::CreateInstance());
+        TBBufferPtr buff(TBBuffer::CreateInstance(len));
         buff->Add(data,len);
         BufQuqueScopeLock;
         buf_queue_.push(buff);
         err_count = 0;
         mad_push_count_++;
-        //LogInfo("buf queue size:%d\n", buf_queue_.size());
+        //LogInfo("buf queue size:%d, len = %d\n", buf_queue_.size(), len);
     }
     else
     {
@@ -203,8 +203,9 @@ int AlsaPcm::InitAlsa()
     }
 
     int fmt = SND_PCM_FORMAT_S16_LE;
-    unsigned int rate = 44100;
+    unsigned int rate = 16000;
     unsigned short channel = 2;
+    cache_min_size_ = rate / 1000;
     setAudioParams(fmt, rate, channel);
 
     return ret;
@@ -339,6 +340,34 @@ static int wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int co
 			return 0;
 	}
 }
+int AlsaPcm::GetPollDescriptors(snd_pcm_t *handle, int &count, struct pollfd **ufds)
+{
+    int err;
+    count = snd_pcm_poll_descriptors_count(handle);
+    if (count <= 0)
+    {
+        LogError("Invalid poll descriptors count\n");
+        return count;
+    }
+
+    *ufds = (struct pollfd*) malloc(sizeof (struct pollfd) * count);
+    //LogInfo("sizeof (struct pollfd) * count = %dbytes", sizeof (struct pollfd) * count);
+    if (ufds == NULL)
+    {
+        LogError("No enough memory\n");
+        return -ENOMEM;
+    }
+
+    if ((err = snd_pcm_poll_descriptors(handle, *ufds, count)) < 0)
+    {
+        LogError("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
+        if (*ufds)
+            free(*ufds);
+        return err;
+    }
+
+    return 0;
+}
 
 int AlsaPcm::PlayFrame()
 {
@@ -356,75 +385,61 @@ int AlsaPcm::PlayFrame()
 
     FunEntry();
     running_ = true;
-    count = snd_pcm_poll_descriptors_count (handle);
-    if (count <= 0) 
-    {
-	LogError("Invalid poll descriptors count\n");
-	return count;
-    }
 
-    ufds = (struct pollfd*)malloc(sizeof(struct pollfd) * count);
-    if (ufds == NULL) 
+    err = GetPollDescriptors(handle, count, &ufds);
+    if (err != 0)
     {
-	LogError("No enough memory\n");
-	return -ENOMEM;
+        LogError("GetPollDescriptors failed");
+        if (ufds)
+            free(ufds);
+        return err;
     }
-
-    if ((err = snd_pcm_poll_descriptors(handle, ufds, count)) < 0) 
-    {
-	LogError("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
-	return err;
-    }
-
     init = 1;
     cacheing_ = true;
-    while (!isShutdown()) 
+
+    while (!isShutdown())
     {
         usleep(5000);
 
-        if (!init) 
+        if (!init)
         {
-	    err = wait_for_poll(handle, ufds, count);
-	    if (err < 0) 
+            err = wait_for_poll(handle, ufds, count);
+            if (err < 0)
             {
-	        if (snd_pcm_state(handle) == SND_PCM_STATE_XRUN 
-                   ||  snd_pcm_state(handle) == SND_PCM_STATE_SUSPENDED) 
+                if (snd_pcm_state(handle) == SND_PCM_STATE_XRUN
+                        || snd_pcm_state(handle) == SND_PCM_STATE_SUSPENDED)
                 {
-	            err = snd_pcm_state(handle) == SND_PCM_STATE_XRUN ? -EPIPE : -ESTRPIPE;
-		    if (xrun_recovery(handle, err, 0, pcm_write_count_) < 0) 
+                    err = snd_pcm_state(handle) == SND_PCM_STATE_XRUN ? -EPIPE : -ESTRPIPE;
+                    if (xrun_recovery(handle, err, 0, pcm_write_count_) < 0)
                     {
-		        LogError("Write error: %s\n", snd_strerror(err));
-			//exit(EXIT_FAILURE);
-		    }
-			
-                    init = 1;
-		} 
-                else 
-                {
-		    LogError("Wait for poll failed\n");
-		    return err;
-		}
-	    }
-	}
+                        LogError("Write error: %s\n", snd_strerror(err));
+                    }
 
-        if(cacheing_)
+                    init = 1;
+                }
+                else
+                {
+                    LogError("Wait for poll failed\n");
+                    return err;
+                }
+            }
+        }
+
+        if (cacheing_)
         {
             cacheing_wait_count++;
-            if(cacheing_wait_count > 10*240)        //wait 240s, one time wait is 100ms, the wait time only is a practice value
-            {
-                LogError("cacheing timeout = %ds, should restart it...", cacheing_wait_count*100/1000);
-                system("/etc/init.d/tbapp restart");
-            }
+
         }
         else
         {
             cacheing_wait_count = 0;
         }
-        if(!buf)
+
+        if (!buf)
         {
-            if(!cacheing_)
+            if (!cacheing_)
             {
-                if(!buf_queue_.empty())
+                if (!buf_queue_.empty())
                 {
                     BufQuqueScopeLock;
                     buf = buf_queue_.front();
@@ -433,15 +448,15 @@ int AlsaPcm::PlayFrame()
                 else
                 {
                     cacheing_ = true;
-                    LogInfo("buf:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
+                    LogDebug("buf:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
                     usleep(50000);
                     continue;
                 }
             }
             else
             {
-                LogInfo("Cacheing:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
-                if( buf_queue_.size() > cache_min_size_ )
+                LogDebug("Cacheing:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
+                if (buf_queue_.size() > cache_min_size_)
                 {
                     cacheing_ = false;
                     //cache_min_size_ = 5;
@@ -453,89 +468,83 @@ int AlsaPcm::PlayFrame()
                 continue;
             }
         }
-        
-        if(buf)
+        if (!is_first_pcm_write) //only for debug
         {
-                //generate_sine(areas, 0, period_size, &phase);
-                //ptr = samples;
-                //cptr = period_size;
-                ptr = (short int*)buf->Data();
-                cptr =  buf->Size()/(2*channels);
+            LogDebug("Cacheing ready:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
+        }
+
+        if (buf)
+        {
+            ptr = (short int*) buf->Data();
+            cptr = buf->Size() / (2 * channels);
         }
         else
         {
             LogError("underrun,queue size:%d....", buf_queue_.size());
         }
-		
-        while (cptr > 0) 
+
+        while (cptr > 0)
         {
-            if(!is_first_pcm_write)                     //only for debug
+            if (!is_first_pcm_write) //only for debug
             {
                 is_first_pcm_write = true;
-                LogInfo("first pcm write, alsa_size = %d, mad_push_count_ = %d", buf_queue_.size(), mad_push_count_);
+                LogDebug("first pcm write, alsa_size = %d, mad_push_count_ = %d", buf_queue_.size(), mad_push_count_);
             }
-	    err = snd_pcm_writei(handle, ptr, cptr);
-            pcm_write_count_++;                         //for debug
-	    if (err < 0) 
+            err = snd_pcm_writei(handle, ptr, cptr);
+            pcm_write_count_++; //for debug
+            if (err < 0)
             {
                 LogError("Write error(%d): %s\n", err_count, snd_strerror(err));
-		if (xrun_recovery(handle, err, 1, pcm_write_count_) < 0) 
+                if (xrun_recovery(handle, err, 1, pcm_write_count_) < 0)
                 {
                     LogError("xrun_recovery error: %s\n", snd_strerror(err));
-		}
-		init = 1;
+                }
+                init = 1;
 
                 ++err_count;
-                //if(err_count > 5 )
-                {
-                    LogError("overflow too match,error count:%d.", err_count);
-                }
-                if(err_count > 50)  	//some err can't recover, ex. err = -22, so need to restart it
-                {
-                    LogError("alsa has fallen into trap, should restart it... ");
-                    system("/etc/init.d/tbapp restart");
-                }
-
-		break;	/* skip one period */
-	    }
+                LogError("overflow too match,error count:%d.", err_count);
+ 
+                break; /* skip one period */
+            }
             else
             {
                 err_count = 0;
             }
-                
+
             buf.reset();
-	    if (snd_pcm_state(handle) == SND_PCM_STATE_RUNNING)
-		init = 0;
-	    ptr += err * channels;
-	    cptr -= err;
-	    if (cptr == 0)
-		break;
-	    /* it is possible, that the initial buffer cannot store */
-	    /* all data from the last period, so wait awhile */
-	    err = wait_for_poll(handle, ufds, count);
-	    if (err < 0) 
+            if (snd_pcm_state(handle) == SND_PCM_STATE_RUNNING)
+                init = 0;
+            ptr += err * channels;
+            cptr -= err;
+            if (cptr == 0)
+                break;
+            /* it is possible, that the initial buffer cannot store */
+            /* all data from the last period, so wait awhile */
+            err = wait_for_poll(handle, ufds, count);
+            if (err < 0)
             {
-		if (snd_pcm_state(handle) == SND_PCM_STATE_XRUN 
-                    || snd_pcm_state(handle) == SND_PCM_STATE_SUSPENDED) 
+                if (snd_pcm_state(handle) == SND_PCM_STATE_XRUN
+                        || snd_pcm_state(handle) == SND_PCM_STATE_SUSPENDED)
                 {
-		    err = snd_pcm_state(handle) == SND_PCM_STATE_XRUN ? -EPIPE : -ESTRPIPE;
-		    if (xrun_recovery(handle, err, 2, pcm_write_count_) < 0) 
+                    err = snd_pcm_state(handle) == SND_PCM_STATE_XRUN ? -EPIPE : -ESTRPIPE;
+                    if (xrun_recovery(handle, err, 2, pcm_write_count_) < 0)
                     {
-			LogError("Write error: %s\n", snd_strerror(err));
-			//exit(EXIT_FAILURE);
-		    }
-		    init = 1;
-		} 
-                else 
+                        LogError("Write error: %s\n", snd_strerror(err));
+                    }
+                    init = 1;
+                }
+                else
                 {
-		    LogError("Wait for poll failed\n");
-		    return err;
-		}
-	    }
-	}
+                    LogError("Wait for poll failed\n");
+                    return err;
+                }
+            }
+        }
     }
 
-    while(!buf_queue_.empty())
+    if (ufds)
+        free(ufds);
+    while (!buf_queue_.empty())
     {
         buf_queue_.pop();
     }
@@ -543,68 +552,7 @@ int AlsaPcm::PlayFrame()
     return err;
 }
 
-// int AlsaPcm::PlayFrame()
-// {
-//     int err = 0;
 
-//     running_ = true;
-
-//     while( running_ ){
-//         TBBufferPtr buf;
-//         {
-//             if(!cacheing_){
-//                 if(!buf_queue_.empty()){
-//                     BufQuqueScopeLock;
-//                     buf = buf_queue_.front();
-//                     buf_queue_.pop();
-//                 }else{
-//                     cacheing_ = true;
-//                 }
-//             }else{
-//                 //LogInfo("Cacheing:%d/%d", buf_queue_.size(), cache_min_size_);
-//                 if( buf_queue_.size() > cache_min_size_ ){
-//                     cacheing_ = false;
-//                 }else{
-//                     //usleep(10000);
-//                 }
-//             }
-//         }
-
-//         if(buf){
-//             int queue_size = buf_queue_.size();
-//             struct timeval last_tv,cur_tv;
-//             gettimeofday(&cur_tv,0);
-
-//             if (pcm_handle_ != NULL &&
-//                 (err = snd_pcm_writei( pcm_handle_, buf->Data(), buf->Size()/(2*channels_))) < 0)
-//             {
-//                 if( err < 0 ){
-//                     LogError("snd_pcm_writei error:%d,time diff:%d"
-//                              , err,(int)(cur_tv.tv_usec - last_tv.tv_usec));
-//                 }
-//                 if(err == -EPIPE)
-//                 {
-//                     LogInfo("underrun,snd_pcm_prepare,before quere size:%d, buf queue size:%d."
-//                             ,queue_size , buf_queue_.size());
-//                     snd_pcm_prepare(pcm_handle_);
-//                 }
-
-//                 err = snd_pcm_recover( pcm_handle_, err, 1);
-//                 if (err < 0) {
-//                     LogInfo("PlayFrame err %s \n", snd_strerror(err));
-//                 }
-//             }
-//             last_tv = cur_tv;
-//         }
-//     }
-
-//     while(!buf_queue_.empty())
-//     {
-//         buf_queue_.pop();
-//     }
-
-//     return err;
-// }
 
 void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short &channels)
 {
@@ -625,6 +573,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     {
         return;
     }
+    cache_min_size_ = samplerate / 1000;
 
     LogInfo("sample rate: %d , channels: %d\n", samplerate, channels);
 
@@ -700,6 +649,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
         return;
     }
 
+
     if (pcm_params_sw_ != NULL)
     {
         snd_pcm_sw_params_free (pcm_params_sw_);
@@ -722,11 +672,31 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
         LogError("unable get period size: %s !\n", snd_strerror(ret));
     }
     LogInfo("frames %d !\n", frames);
-
+    
     //ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, frames*2);
     
-  
-    ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, 16384);        //the value(16384) is  suit for pc
+    // Õâ¸öÖµ¶ÔÓÚ²»Í¬µÄsamplerateÓ°Ïì·Ç³£´ó£
+    // 16384 ÊÊºÏ4800
+    // 16384/3 
+
+    /*
+    01-03 17:25:29 797 alsa_pcm.cpp::setAudioParams() - sample rate: 16000 , channels: 2
+     
+    01-03 17:25:29 799 alsa_pcm.cpp::setAudioParams() - frames 80 !
+     
+    01-03 17:25:29 799 alsa_pcm.cpp::PlayFrame() -  Entry...  
+    01-03 17:25:29 801 alsa_pcm.cpp::setAudioParams() - sample rate: 8000 , channels: 2
+     
+    01-03 17:25:29 804 alsa_pcm.cpp::setAudioParams() - frames 40 !
+
+    01-03 17:26:04 790 alsa_pcm.cpp::setAudioParams() - sample rate: 48000 , channels: 2
+ 
+01-03 17:26:04 791 alsa_pcm.cpp::PlayFrame() -  Entry...  
+01-03 17:26:04 796 alsa_pcm.cpp::setAudioParams() - frames 242 !
+
+    */
+    // ¶ÔÓÚ²»Í¬µÄsamplerate±ØÐëÉèÖÃ²»Í¬µÄ²ÎÊý
+    ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, 67*frames);        //the value(16384) is  suit for pc
     if (ret < 0)
     {
         LogError("unable set start threshold: %s !\n", snd_strerror(ret));
@@ -736,7 +706,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     {
         LogError("unable set sw params: %s !\n", snd_strerror(ret));
     }
-    
+   // */
 }
 
 int AlsaPcm::GetPcmWriteCount()

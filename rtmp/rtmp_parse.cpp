@@ -4,7 +4,8 @@
 #include "rtmp_parse.hpp"
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
-
+#include "media_player.hpp"
+#include "log_util.hpp"
 
 #define TAG_TYPE_AUDIO 8
 #define TAG_TYPE_VIDEO 9
@@ -13,7 +14,7 @@
 RtmpParser::RtmpParser(const char *url)
 {
 	strcpy(rtmpUrl_, url);
-	mediaPlayer_ =  new MediaPlayer();
+	mediaPlayer_ =  new MediaPlayer(this);
 	init();
 }
 
@@ -37,6 +38,7 @@ void RtmpParser::onGetAAC(const uint8_t *pcData, int iLen, uint32_t ui32TimeStam
     writeAdtsHeader(m_adts, m_adts.data);
     //audioDec_->InputData(m_adts.data, m_adts.aac_frame_length, &pcm);
 	// 解aac
+	//LogDebug("m_adts.aac_frame_length = %d", m_adts.aac_frame_length);
 	mediaPlayer_->onAAC(m_adts);
 	m_adts.aac_frame_length = 7;
 }
@@ -98,10 +100,23 @@ void RtmpParser::onLoop()
 		     rtmp->m_read.buflen);
 
     unsigned int tagDataLen  = 0;
-    while(nRead=RTMP_Read(rtmp,buf,bufsize))
+    countbufsize = 0;
+    nRead = 0;
+    while(true)
     {
-        tempBuf = (unsigned char *)buf;
-        countbufsize+=nRead;
+        if(0 == nRead)
+        {
+            nRead = RTMP_Read(rtmp,buf,bufsize);
+            if(0 == nRead)
+            {
+                RTMP_LogPrintf("RTMP_Read finish");
+                break;
+            }
+            tempBuf = (unsigned char *)buf;
+            countbufsize += nRead;
+        }
+        
+        
         // 有时候会拿到两帧数据
 		tagDataLen = 0;
 		tagDataLen = tempBuf[1];
@@ -110,6 +125,7 @@ void RtmpParser::onLoop()
 		tagDataLen <<= 8;
 		tagDataLen |= tempBuf[3];
 
+        
 		/*
 		RTMP_LogPrintf("Receive: %5dByte, buf[0] = 0x%02x,%02x %02x %02x, %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 		    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3], tempBuf[11], tempBuf[12],
@@ -129,28 +145,31 @@ void RtmpParser::onLoop()
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
+			    RTMP_LogPrintf("audio strAudioCfg 0x%02x, 0x%02x\n", tempBuf[13], tempBuf[14]);
                 makeAdtsHeader(&tempBuf[13], m_adts);
 				getAACInfo(m_adts, m_iSampleRate, m_iChannel);
+				RTMP_LogPrintf("audio m_iSampleRate:%d, m_iChannel:%d\n", m_iSampleRate, m_iChannel);
             }
             else if(0xaf == tempBuf[11] && 0x01 == tempBuf[12])
             {
-                /*
+               /*
             	RTMP_LogPrintf("audio data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
-			     */
+			    */
             	onGetAAC(tempBuf + 13, tagDataLen - 2, rtmp->m_read.timestamp);
             }
         }
         else if(TAG_TYPE_VIDEO == tempBuf[0])           // 视频帧
         {
-			RTMP_LogPrintf("video data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
+			/*RTMP_LogPrintf("video data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
+			     */
         }
         else
         {
@@ -159,6 +178,16 @@ void RtmpParser::onLoop()
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
+        }
+
+        if(nRead >= tagDataLen + 15)     // 15 = tag head size + pre tag size
+        {
+            nRead -= (tagDataLen + 15);
+            tempBuf += (tagDataLen + 15);
+        }
+        else
+        {
+            nRead = 0;
         }
     }
 

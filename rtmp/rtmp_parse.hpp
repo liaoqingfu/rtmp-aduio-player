@@ -4,8 +4,8 @@
 #include "player.h"
 #include "thread.hpp"
 #include "audio_dec.hpp"
-#include "media_player.hpp"
 
+class MediaPlayer;
 class RtmpParser:public Thread
 {
 public:
@@ -16,10 +16,11 @@ public:
 	// 设置环形buffer
 	void onGetAAC(const uint8_t *pcData, int iLen, uint32_t ui32TimeStamp);
 	void onLoop();							//内部线程
-private:
+
 	int m_iSampleRate = 44100;
 	int m_iSampleBit = 16;
-	int m_iChannel = 1;
+	int m_iChannel = 2;
+private:
 	AdtsFrame m_adts;
 	char rtmpUrl_[256];
 	MediaPlayer *mediaPlayer_;

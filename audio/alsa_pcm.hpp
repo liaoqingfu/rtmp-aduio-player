@@ -23,7 +23,7 @@ public:
     void onLoop();
     int GetAlsaQueueSize();
     int GetPcmWriteCount();
-    
+    int GetPollDescriptors(snd_pcm_t *handle, int &count, struct pollfd **ufds);
 protected:
     int Init();
     int Release();
