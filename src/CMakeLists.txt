@@ -10,6 +10,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/rtmp)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/audio)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/video)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/player)
 #使用boost
 SET(Boost_USE_STATIC_LIBS        ON) # only find static libs
@@ -29,4 +30,4 @@ LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/third_lib/faad/lib2)
 ADD_EXECUTABLE(rtmp-player  main.c)
 
 #TARGET_LINK_LIBRARIES(rtmp-player libmp4ff.a libfaad.a audio rtmp_src util player rtmp pthread )
-TARGET_LINK_LIBRARIES(rtmp-player   audio rtmp_src util player rtmp pthread boost_system boost_date_time)
+TARGET_LINK_LIBRARIES(rtmp-player   audio avcodec  avformat  avutil rtmp_src util player rtmp pthread boost_system boost_date_time)

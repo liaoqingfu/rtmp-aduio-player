@@ -27,9 +27,12 @@
 #include <librtmp/log.h>
 #include "rtmp_parse.hpp"
 #include "audio_dec.hpp"
+#include "h264_decoder.hpp"
+
 #include "media_player.hpp"
 #include "log_util.hpp"
 #include "alsa_pcm.hpp"
+
 using namespace std;
 
 int InitSockets()
@@ -51,6 +54,8 @@ int main(int argc, char* argv[])
 	AudioDec *audioDec_= new AudioDec();
 	delete alsaPcm;
 	delete audioDec_;
+	H264Decoder *videoDec_ = new H264Decoder();
+	delete videoDec_;
 	InitSockets();
 	initLog4cpp();
 	FunEntry();

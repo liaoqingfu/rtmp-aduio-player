@@ -1,11 +1,13 @@
 #include "media_player.hpp"
 #include "log_util.hpp"
 #include "err_code_define.h"
+#include "h264_decoder.hpp"
 
 MediaPlayer::MediaPlayer(RtmpParser *rtmpParser)
 {
 	audioDec_ = nullptr;
 	alsaPcm_ = nullptr;
+	videoDec_ = nullptr;
 	rtmpParser_ = rtmpParser;
 }
 
@@ -61,6 +63,36 @@ void MediaPlayer::onAAC(const AdtsFrame &data)
 	}
 	// 发送给pcm buffer队列
     //FunExit();
+}
+
+
+
+void MediaPlayer::onH264(const H264Frame &data) {
+
+    if (!videoDec_) 
+    {
+        LogDebug("new H264Decoder()");
+        videoDec_ = new H264Decoder();
+    }
+    if (!videoDec_) {
+        LogDebug("videoDec_ = NULL");
+ 
+        return;
+    }
+    //解码器已经OK
+    //_h264Parser->inputH264(data.data, data.timeStamp);
+    // pts 先不处理
+    LogDebug("videoDec_ = %x", videoDec_);
+    auto frame = videoDec_->inputVideo((uint8_t *)data.data.data(), data.data.size(), data.timeStamp, data.timeStamp);
+    if (!frame) {
+        LogDebug("get frame failed");
+        return;
+    }
+    frame->dts = frame->frame->pkt_dts;
+    frame->pts = frame->frame->pts;
+    FunExit();
+    //onDecoded(frame);
+    // 将解码后的帧发给队列
 }
 
 

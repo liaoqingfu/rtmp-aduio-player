@@ -6,10 +6,11 @@
 #include <librtmp/log.h>
 #include "media_player.hpp"
 #include "log_util.hpp"
+#include <netinet/in.h>
 
-#define TAG_TYPE_AUDIO 8
-#define TAG_TYPE_VIDEO 9
-#define TAG_TYPE_MEDATA  12
+#define TAG_TYPE_AUDIO 0x8
+#define TAG_TYPE_VIDEO 0x9
+#define TAG_TYPE_MEDATA  0x12
 
 RtmpParser::RtmpParser(const char *url)
 {
@@ -140,7 +141,7 @@ void RtmpParser::onLoop()
 		    rtmp->m_read.timestamp,
 		     rtmp->m_read.dataType,
 		     tagDataLen);
-		*/     
+		 */  
         // 解析flag
         if(TAG_TYPE_AUDIO == tempBuf[0])                // 音频帧
         {
@@ -169,25 +170,90 @@ void RtmpParser::onLoop()
 			    */
             	onGetAAC(tempBuf + 13, tagDataLen - 2, timeStamp);
             }
+            
         }
         else if(TAG_TYPE_VIDEO == tempBuf[0])           // 视频帧
         {
-			/*RTMP_LogPrintf("video data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
-			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
-			    rtmp->m_read.timestamp,
-			     rtmp->m_read.dataType,
-			     tagDataLen);
-			     */
+            /*
+			RTMP_LogPrintf("video data: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
+		    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
+		    rtmp->m_read.timestamp,
+		     rtmp->m_read.dataType,
+		     tagDataLen);
+		     */
+		    
+            //LogDebug("tempBuf[11][12] = 0x%x 0x%x, tagDataLen = %d", tempBuf[11], tempBuf[12], tagDataLen);
+            if(tempBuf[12] == 0x0)              //0 = AVC sequence header
+            {
+                uint8_t *spsData = nullptr;
+    		    uint8_t *ppsData = nullptr;
+                uint32_t spsSize = 0;
+                uint32_t ppsSize = 0;
+
+                LogDebug("tempBuf[22] %2x %2x ",tempBuf[22], tempBuf[23]);
+                for(int i = 0; i < tagDataLen; i++)
+                {
+                   // printf("[%d]0x%02x\n ", i+11, tempBuf[i+11]);     // 调试信息
+                }
+                printf("\n");
+                // 获取sps
+                spsSize = tempBuf[22];
+                spsSize <<= 8;
+                spsSize |= tempBuf[23];
+                spsData = &tempBuf[24];
+                m_strSPS.clear();
+                m_strSPS.assign("\x00\x00\x00\x01", 4);
+                m_strSPS.append((char *)spsData, spsSize);
+                LogDebug("spsSize = %d, m_strSPS.size = %d", spsSize, m_strSPS.size());
+           
+                // 获取pps
+                ppsSize = tempBuf[24 + spsSize + 1];
+                ppsSize <<= 8;
+                ppsSize |= tempBuf[24 + spsSize + 2];
+                ppsData = &tempBuf[24 + spsSize + 3];
+                m_strPPS.clear();
+                m_strPPS.assign("\x00\x00\x00\x01", 4);
+                m_strPPS.append((char *)ppsData, ppsSize);
+                LogDebug("ppsSize = %d, ppsSize.size = %d",ppsSize, m_strPPS.size());
+            }
+            else if(tempBuf[12] == 0x1)         // 1 = AVC NALU
+            {
+        		uint32_t iTotalLen = tagDataLen;
+        		uint8_t *videoTagData = nullptr;
+        		videoTagData = &tempBuf[11];            //数据起始
+        		// 0 Stream header
+        		// 1 AVCPacketType
+        		// 2-4 CompositionTime
+        		// 
+        		uint32_t iOffset = 5;           // 直接跳过
+        		while(iOffset + 4 < iTotalLen)
+        		{         // 可能存在多个nal
+                    uint32_t iFrameLen;
+                    // size:
+                    memcpy(&iFrameLen, videoTagData + iOffset, 4);    // 获取帧长
+                    iFrameLen = ntohl(iFrameLen);
+        			iOffset += 4;                   // 跳过size占用的4个字节，然后才是真正的数据
+        			if(iFrameLen + iOffset > iTotalLen){
+        				break;
+        			}
+        			_onGetH264((char *)(videoTagData + iOffset), iFrameLen, timeStamp);
+        			iOffset += iFrameLen;
+        		}
+        	}
         }
-        else
+        else if(TAG_TYPE_MEDATA == tempBuf[0])
         {
 			RTMP_LogPrintf("medata: %5dByte, buf[0] = 0x%02x,%02x %02x %02x timestamp = %d, dataType = %d, tagDataLen = %d\n",nRead, 
 			    tempBuf[0], tempBuf[1], tempBuf[2], tempBuf[3],
 			    rtmp->m_read.timestamp,
 			     rtmp->m_read.dataType,
 			     tagDataLen);
+		         
         }
-
+        else
+        {
+           
+        }
         if(nRead >= tagDataLen + 15)     // 15 = tag head size + pre tag size
         {
             nRead -= (tagDataLen + 15);
@@ -197,6 +263,7 @@ void RtmpParser::onLoop()
         {
             nRead = 0;
         }
+   
     }
 
     if(buf){
@@ -210,5 +277,44 @@ void RtmpParser::onLoop()
     }   
 
     delete mediaPlayer_;
+}
+
+
+void RtmpParser::_onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp)
+{
+    
+    switch (pcData[0] & 0x1F) 
+    {
+	    case 5: 
+    	{
+    	    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+    		onGetH264(m_strSPS.data() + 4, m_strSPS.length() - 4, ui32TimeStamp);
+    		onGetH264(m_strPPS.data() + 4, m_strPPS.length() - 4, ui32TimeStamp);
+    	}
+    	case 1: 
+    	{
+    	    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+    		onGetH264(pcData, iLen, ui32TimeStamp);
+    	}
+		break;
+	    default:
+		//WarnL <<(int)(pcData[0] & 0x1F);
+		break;
+	}
+}
+void RtmpParser::onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp)
+{
+    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+    m_h264frame.type = pcData[0] & 0x1F;
+	m_h264frame.timeStamp = ui32TimeStamp;
+	m_h264frame.data.assign("\x0\x0\x0\x1", 4);  //添加264头
+	m_h264frame.data.append(pcData, iLen);
+	LogDebug("");
+	{
+		// 送给解码器进行解码
+		mediaPlayer_->onH264(m_h264frame);
+	}
+	m_h264frame.data.clear();
+	FunExit();
 }
 
