@@ -7,6 +7,8 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/audio)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/video)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/player)
+INCLUDE_DIRECTORIES("/usr/local/ffmpeg/include")
+link_directories("/usr/local/ffmpeg/lib")
 
 aux_source_directory(. DIR_WORLD_SRCS)
 add_library(player STATIC ${DIR_WORLD_SRCS})

@@ -204,6 +204,8 @@ void RtmpParser::onLoop()
                 m_strSPS.clear();
                 m_strSPS.assign("\x00\x00\x00\x01", 4);
                 m_strSPS.append((char *)spsData, spsSize);
+				m_strSPS2.clear();
+				m_strSPS2.append((char *)spsData, spsSize);
                 LogDebug("spsSize = %d, m_strSPS.size = %d", spsSize, m_strSPS.size());
            
                 // 获取pps
@@ -215,6 +217,10 @@ void RtmpParser::onLoop()
                 m_strPPS.assign("\x00\x00\x00\x01", 4);
                 m_strPPS.append((char *)ppsData, ppsSize);
                 LogDebug("ppsSize = %d, ppsSize.size = %d",ppsSize, m_strPPS.size());
+
+				getAVCInfo(m_strSPS2, m_iVideoWidth, m_iVideoHeight, m_fVideoFps);
+				LogDebug("m_iVideoWidth = %d, m_iVideoHeight = %d, m_fVideoFps = %f", 
+					m_iVideoWidth, m_iVideoHeight, m_fVideoFps);
             }
             else if(tempBuf[12] == 0x1)         // 1 = AVC NALU
             {
@@ -293,7 +299,7 @@ void RtmpParser::_onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp
     	}
     	case 1: 
     	{
-    	    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+    	    //LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
     		onGetH264(pcData, iLen, ui32TimeStamp);
     	}
 		break;
@@ -304,17 +310,17 @@ void RtmpParser::_onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp
 }
 void RtmpParser::onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp)
 {
-    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+    //LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
     m_h264frame.type = pcData[0] & 0x1F;
 	m_h264frame.timeStamp = ui32TimeStamp;
 	m_h264frame.data.assign("\x0\x0\x0\x1", 4);  //添加264头
 	m_h264frame.data.append(pcData, iLen);
-	LogDebug("");
+	//LogDebug("");
 	{
 		// 送给解码器进行解码
 		mediaPlayer_->onH264(m_h264frame);
 	}
 	m_h264frame.data.clear();
-	FunExit();
+	//FunExit();
 }
 

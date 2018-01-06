@@ -82,7 +82,7 @@ void MediaPlayer::onH264(const H264Frame &data) {
     //解码器已经OK
     //_h264Parser->inputH264(data.data, data.timeStamp);
     // pts 先不处理
-    LogDebug("videoDec_ = %x", videoDec_);
+    //LogDebug("videoDec_ = %x", videoDec_);
     auto frame = videoDec_->inputVideo((uint8_t *)data.data.data(), data.data.size(), data.timeStamp, data.timeStamp);
     if (!frame) {
         LogDebug("get frame failed");
@@ -90,7 +90,7 @@ void MediaPlayer::onH264(const H264Frame &data) {
     }
     frame->dts = frame->frame->pkt_dts;
     frame->pts = frame->frame->pts;
-    FunExit();
+    //FunExit();
     //onDecoded(frame);
     // 将解码后的帧发给队列
 }

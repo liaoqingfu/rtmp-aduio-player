@@ -40,7 +40,9 @@ private:
 	MediaPlayer *mediaPlayer_;
 
 	string m_strSPS;
+	string m_strSPS2;
 	string m_strPPS;
+	string m_strPPS2;
 	int m_iVideoWidth = 0;
 	int m_iVideoHeight = 0;
 	float m_fVideoFps = 0;

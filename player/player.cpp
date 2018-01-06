@@ -1,5 +1,6 @@
 #include <cstring>
 #include "player.h"
+#include "SPSParser.h"
 
 
 static unsigned const samplingFrequencyTable[16] = { 96000, 88200,
@@ -97,7 +98,7 @@ void getAACInfo(const AdtsFrame &adts,int &iSampleRate,int &iChannel)
 	iChannel = adts.channel_configuration;
 }
 bool getAVCInfo(const string& strSps,int &iVideoWidth, int &iVideoHeight, float  &iVideoFps) {
-    /*
+    
     T_GetBitContext tGetBitBuf;
     T_SPS tH264SpsInfo;
     memset(&tGetBitBuf,0,sizeof(tGetBitBuf));
@@ -109,8 +110,9 @@ bool getAVCInfo(const string& strSps,int &iVideoWidth, int &iVideoHeight, float 
     }
     h264GetWidthHeight(&tH264SpsInfo, &iVideoWidth, &iVideoHeight);
     h264GeFramerate(&tH264SpsInfo, &iVideoFps);
-    //FatalL << iVideoWidth << " " << iVideoHeight << " " << iVideoFps;
-    */
+    printf("iVideoWidth = %d, iVideoHeight = %d, iVideoFps = %f, iFrameMbsOnlyFlag = %d\n", 
+		iVideoWidth, iVideoHeight, iVideoFps, tH264SpsInfo.iFrameMbsOnlyFlag);
+    
     return true;
 }
 

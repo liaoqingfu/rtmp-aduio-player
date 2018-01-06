@@ -119,7 +119,7 @@ typedef struct T_SPS {
     int iColourDescriptionPresentFlag;
     enum T_AVColorPrimaries tColorPrimaries;
     enum T_AVColorTransferCharacteristic tColorTrc;
-    enum T_AVColorSpace tColorspace;
+    enum T_AVColorSpace tColorspace ;
     int iTimingInfoPresentFlag;
     uint32_t u32NumUnitsInTick;
     uint32_t u32TimeScale;

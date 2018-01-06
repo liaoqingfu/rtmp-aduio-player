@@ -88,7 +88,7 @@ public:
 private:	
 	//std::shared_ptr<Base> p;
 	Base *p2;
-	std::queue<std::shared_ptr<Base>> queue_;
+	std::queue<std::shared_ptr<Base>> queue_;		//  当类被销毁时,对应的成员也会被销毁，仅限于智能指针
 };
 
 ///////////////////////////////////////////////  

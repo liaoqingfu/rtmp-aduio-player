@@ -28,7 +28,7 @@
 #include "rtmp_parse.hpp"
 #include "audio_dec.hpp"
 #include "h264_decoder.hpp"
-
+#include "SDl2Displayer.hpp"
 #include "media_player.hpp"
 #include "log_util.hpp"
 #include "alsa_pcm.hpp"
@@ -54,6 +54,8 @@ int main(int argc, char* argv[])
 	AudioDec *audioDec_= new AudioDec();
 	delete alsaPcm;
 	delete audioDec_;
+	YuvDisplayer *yuvDisplayer_ = new YuvDisplayer();
+	delete yuvDisplayer_;
 	H264Decoder *videoDec_ = new H264Decoder();
 	delete videoDec_;
 	InitSockets();
@@ -69,7 +71,7 @@ int main(int argc, char* argv[])
 	char *buf =  new char[bufsize];
 	memset(buf,0,bufsize);
 	long countbufsize=0;
-	
+	//h264GetWidthHeight(nullptr, nullptr, nullptr);
 	FILE *fp=fopen("receive.flv","wb");
 	if (!fp){
 		RTMP_LogPrintf("Open File Error.\n");

@@ -8,10 +8,12 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/audio)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/video)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/player)
+INCLUDE_DIRECTORIES("/usr/local/ffmpeg/include")
+link_directories(/usr/lib/x86_64-linux-gnu)
 
 aux_source_directory(. DIR_WORLD_SRCS)
 add_library(video STATIC ${DIR_WORLD_SRCS} )
-TARGET_LINK_LIBRARIES(video avcodec  avformat  avutil)
+TARGET_LINK_LIBRARIES(video SDL2 swscale avcodec  avformat  avutil)
 
 
 

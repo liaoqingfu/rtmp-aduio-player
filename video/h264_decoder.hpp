@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <thread>
+#include "SDl2Displayer.hpp"
 
 #include "log_util.hpp"
 #ifdef __cplusplus
@@ -36,6 +37,7 @@ class H264Decoder
 {
 public:
 	H264Decoder(void){
+		yuvDisplayer_ = nullptr;
 		avcodec_register_all();
         av_log_set_level(AV_LOG_QUIET);
 		AVCodec *pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
@@ -72,19 +74,25 @@ public:
 		pkt.pts = pts;
 		int iGotPicture ;
 		std::shared_ptr<YuvFrame> frame(new YuvFrame());// = m_pool.obtain();
-		LogDebug("ctx = %x", m_pContext.get());
+		//LogDebug("ctx = %x", m_pContext.get());
 		//int iLen;
 		auto iLen = avcodec_decode_video2(m_pContext.get(), frame->frame.get(), &iGotPicture, &pkt);
 		if (!iGotPicture || iLen < 0) {
 			//m_pool.quit(frame);
-			LogDebug("iGotPicture");
+			//LogDebug("iGotPicture");
 			return nullptr;
 		}
-		LogDebug("return frame");
+		//LogDebug("return frame");
+		if(!yuvDisplayer_)
+		{
+			yuvDisplayer_ = new YuvDisplayer();
+		}
+		yuvDisplayer_->displayYUV(frame->frame.get());
 		return frame;
 	}
 private:
 	std::shared_ptr<AVCodecContext> m_pContext;
+	YuvDisplayer *yuvDisplayer_;
 	//ResourcePool<YuvFrame> m_pool;
 };
 

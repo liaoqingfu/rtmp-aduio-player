@@ -552,9 +552,9 @@ static inline int decodeVuiParameters(void *pvBuf, T_SPS *ptSps)
 
         ptSps->iColourDescriptionPresentFlag = getOneBit(pvBuf);
         if (ptSps->iColourDescriptionPresentFlag) {
-            ptSps->tColorPrimaries = getBits(pvBuf, 8); /* colour_primaries */
-            ptSps->tColorTrc       = getBits(pvBuf, 8); /* transfer_characteristics */
-            ptSps->tColorspace      = getBits(pvBuf, 8); /* matrix_coefficients */
+            ptSps->tColorPrimaries = (enum T_AVColorPrimaries)getBits(pvBuf, 8); /* colour_primaries */
+            ptSps->tColorTrc       = (enum T_AVColorTransferCharacteristic)getBits(pvBuf, 8); /* transfer_characteristics */
+            ptSps->tColorspace      = (enum T_AVColorSpace)getBits(pvBuf, 8); /* matrix_coefficients */
             if (ptSps->tColorPrimaries >= AVCOL_PRI_NB)
                 ptSps->tColorPrimaries = AVCOL_PRI_UNSPECIFIED;
             if (ptSps->tColorTrc >= AVCOL_TRC_NB)
@@ -703,7 +703,7 @@ int h264DecSeqParameterSet(void *pvBufSrc, T_SPS *ptSps)
     memset(ptSps->aau8ScalingMatrix4, 16, sizeof(ptSps->aau8ScalingMatrix4));
     memset(ptSps->aau8ScalingMatrix8, 16, sizeof(ptSps->aau8ScalingMatrix8));
     ptSps->iScalingMatrixPresent = 0;
-    ptSps->tColorspace = 2; //AVCOL_SPC_UNSPECIFIED
+    ptSps->tColorspace = AVCOL_SPC_UNSPECIFIED;//(enum T_AVColorSpace)2; //AVCOL_SPC_UNSPECIFIED
 
     if (ptSps->iProfileIdc == 100 ||  // High profile
         ptSps->iProfileIdc == 110 ||  // High10 profile
@@ -939,6 +939,8 @@ exit:
 
 void h264GetWidthHeight(T_SPS *ptSps, int *piWidth, int *piHeight)
 {
+	if(!ptSps)
+		return;
 	// ¿í¸ß¼ÆËã¹«Ê½
 	int iCodeWidth = 0;
 	int iCodedHeight = 0;
