@@ -4,40 +4,78 @@
 using namespace std;
 
 
-TBSharedBuffer::TBSharedBuffer(size_t size)
+TBSharedBuffer::TBSharedBuffer(int size)
 {
-    buf_ = BufPtr(new vector<char>(size));
-    buf_->resize(0);
+    buf_ = new uint8_t[size];
+    capacity_ = size;
+	size_ = 0;
 }
 TBSharedBuffer::~TBSharedBuffer()
 {
-
+	if(buf_)
+	{
+		//printf("~TBSharedBuffer size_ = %d, %d\n", size_, capacity_);
+		delete [] buf_;
+	}
 }
 
-char * TBSharedBuffer::Data()
+uint8_t * TBSharedBuffer::Data()
 {
-    return &buf_->operator[](0);
+    return buf_;
 }
-size_t TBSharedBuffer::Size()
+int TBSharedBuffer::Size()
 {
-    return buf_->size();
+    return size_;
 }
 
-void TBSharedBuffer::Add(void * data, size_t len)
+bool TBSharedBuffer::Add(uint8_t *data, int len)
 {
-    for(int i = 0; i < len; ++i){
-        buf_->push_back(*(char*)((char*)data + i ) );
-         //       memcpy(buf_->data(), data, len);
-    }
+	if((!buf_) || (!data) || (len < 0))
+	{
+		printf("add failed, buf_ = 0x%x, data = 0x%x, len = %d\n", buf_, data, len);
+		return false;
+	}
+
+    if(len + size_ > capacity_)	//ÖØÐÂÉêÇëÄÚ´æ
+   	{
+   		printf("new buffer again, len = %d, size_ = %d, capacity_ = %d\n", len, size_, capacity_);
+		capacity_ = ((len + size_)>>11 + 1) * 2048;
+		uint8_t *tempBuf  = new uint8_t[capacity_];
+		if(!tempBuf)
+		{
+			printf("new tempBuf faile\n");
+			return false;
+		}
+		memcpy(tempBuf, buf_, size_);
+		delete [] buf_;
+		buf_ = tempBuf;
+	}
+	memcpy(buf_ + size_, data, len);
+	size_ += len;
+
+	return true;
 }
 
 void TBSharedBuffer::Clear()
 {
-    buf_->clear();
+    size_ = 0;
 }
 
 TBBuffer *TBSharedBuffer::Clone()
 {
-    return new TBSharedBuffer(*this);
+	TBBuffer *tbBfuffer = new TBSharedBuffer(capacity_);
+
+	if(!tbBfuffer)
+		return nullptr;
+	
+	if(tbBfuffer->Add(buf_, size_))
+    {
+    	return tbBfuffer;
+	}
+	else
+	{
+		delete tbBfuffer;
+		return nullptr;
+	}
 }
 

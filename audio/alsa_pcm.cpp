@@ -57,7 +57,11 @@ int AlsaPcm::Push(void * data, int len)
     if(GetAlsaQueueSize() < cache_max_size_ )
     {
         TBBufferPtr buff(TBBuffer::CreateInstance(len));
-        buff->Add(data,len);
+        if(!buff->Add((uint8_t *)data,len))
+		{
+			LogError("new buffer failed");
+			return E_ERR;
+        }
         BufQuqueScopeLock;
         buf_queue_.push(buff);
         err_count = 0;
@@ -675,7 +679,7 @@ void AlsaPcm::setAudioParams(int &fmt, unsigned int &samplerate, unsigned short 
     
     //ret = snd_pcm_sw_params_set_start_threshold(pcm_handle_, pcm_params_sw_, frames*2);
     
-    // Õâ¸öÖµ¶ÔÓÚ²»Í¬µÄsamplerateÓ°Ïì·Ç³£´ó£
+    // Õâ¸öÖµ¶ÔÓÚ²»Í¬µÄsamplerateÓ°Ïì·Ç³£´ó?
     // 16384 ÊÊºÏ4800
     // 16384/3 
 

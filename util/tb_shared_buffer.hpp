@@ -9,17 +9,18 @@ class TBSharedBuffer:
         public TBBuffer
 {
 public:
-    TBSharedBuffer(size_t size = 1024 );
+    TBSharedBuffer(int size = 2048);
     ~TBSharedBuffer();
 
-    virtual char * Data();
-    virtual size_t Size();
-    virtual void Add(void * data, size_t len);
+    virtual uint8_t * Data();
+    virtual int Size();
+    virtual bool Add(uint8_t * data, int len);
     virtual void Clear();
     virtual TBBuffer *Clone();
 protected:
-    typedef boost::shared_ptr<std::vector<char> > BufPtr;
-    BufPtr buf_;
+    uint8_t *buf_;
+	int capacity_;
+	int size_;
 };
 #endif
 
