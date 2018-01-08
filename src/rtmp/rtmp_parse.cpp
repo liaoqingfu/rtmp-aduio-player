@@ -288,14 +288,18 @@ void RtmpParser::onLoop()
 
 void RtmpParser::_onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp)
 {
-    
+    static int spsConfig = 0;
     switch (pcData[0] & 0x1F) 
     {
 	    case 5: 
     	{
     	    LogDebug("frame_type = 0x%x, len = %d, t = %d", pcData[0]&0x1f, iLen, ui32TimeStamp);
+			if(spsConfig == 0)
+			{
+				spsConfig = 1;
     		onGetH264(m_strSPS.data() + 4, m_strSPS.length() - 4, ui32TimeStamp);
     		onGetH264(m_strPPS.data() + 4, m_strPPS.length() - 4, ui32TimeStamp);
+				}
     	}
     	case 1: 
     	{
@@ -304,7 +308,7 @@ void RtmpParser::_onGetH264(const char *pcData, int iLen, uint32_t ui32TimeStamp
     	}
 		break;
 	    default:
-		//WarnL <<(int)(pcData[0] & 0x1F);
+			//LogDebug("frame_type = 0x%x", pcData[0] & 0x1F);
 		break;
 	}
 }

@@ -9,6 +9,9 @@
 #include "alsa_pcm.hpp"
 //using namespace std;
 #include "rtmp_parse.hpp"
+#include "SDl2Displayer.hpp"
+
+class  YuvFrame;
 class H264Decoder;
 class MediaPlayer: public Thread
 {
@@ -27,6 +30,9 @@ public:
 	H264Decoder *videoDec_;
 	AlsaPcm *alsaPcm_;
 	RtmpParser *rtmpParser_;
+	YuvDisplayer *yuvDisplayer_;
+	std::queue<YuvFramePtr> buf_queue_;
+   // BufQueue buf_queue_;	
 };
 
 #endif

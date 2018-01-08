@@ -16,6 +16,7 @@ SET(CMAKE_C_COMPILER g++)
 SET(CMAK_CXX_COMPILER g++)
 #支持C++ 11
 add_compile_options(-std=c++11)
+add_compile_options(-w)
 #设置需要链接的库
 set(LINK_LIB_LIST)
 

@@ -452,14 +452,14 @@ int AlsaPcm::PlayFrame()
                 else
                 {
                     cacheing_ = true;
-                    LogDebug("buf:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
+                    //LogDebug("buf:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
                     usleep(50000);
                     continue;
                 }
             }
             else
             {
-                LogDebug("Cacheing:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
+                //LogDebug("Cacheing:%d/%d, mad_push_count = %d", buf_queue_.size(), cache_min_size_, mad_push_count_);
                 if (buf_queue_.size() > cache_min_size_)
                 {
                     cacheing_ = false;
