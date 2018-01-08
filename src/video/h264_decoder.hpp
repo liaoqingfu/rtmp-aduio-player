@@ -11,6 +11,7 @@
 extern "C" {
 #endif 
 #include <libavcodec/avcodec.h>
+
 #ifdef __cplusplus
 }
 #endif 
@@ -30,6 +31,7 @@ public:
 	~YuvFrame() {
 	}
 	std::shared_ptr<AVFrame> frame;
+	
 	uint32_t dts;
 	uint32_t pts;
 };
@@ -83,6 +85,7 @@ public:
 			return nullptr;
 		}
 		//LogDebug("return frame");
+		frame->pts = pts;
 		if(!yuvDisplayer_)
 		{
 			yuvDisplayer_ = new YuvDisplayer();

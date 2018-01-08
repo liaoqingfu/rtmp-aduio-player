@@ -37,6 +37,6 @@ SET(Boost_USE_MULTITHREADED      ON)
 
 SET(Boost_LIBRARIES boost_system boost_date_time)
 
-set(PROJECT_LIBS SDL2 swscale avcodec  avformat  avutil faad rtmp asound avformat avutil pthread boost_system boost_date_time)
+set(PROJECT_LIBS SDL2   faad rtmp swscale avcodec asound avformat avutil pthread boost_system boost_date_time)
 add_executable(rtmp-player ${SRC_LIST})
 target_link_libraries(rtmp-player ${PROJECT_LIBS})

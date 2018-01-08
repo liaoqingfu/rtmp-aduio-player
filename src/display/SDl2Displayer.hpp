@@ -42,6 +42,10 @@ public:
 	YuvDisplayer(void *hwnd = nullptr,const char *title = "untitled"){
 		_title = title;
 		_hwnd = hwnd;
+		if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+        exit(1);
+    }
 	}
 	virtual ~YuvDisplayer(){
 		if (_texture) {
