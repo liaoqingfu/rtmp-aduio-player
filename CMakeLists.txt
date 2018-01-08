@@ -1,23 +1,5 @@
-#cloud terminal
+#rtmp player
 #cmake config file
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
-PROJECT (rtmp-player)
-
-#使用C++编译器
-SET(CMAKE_C_COMPILER g++)			
-SET(CMAK_CXX_COMPILER g++)
-#支持C++ 11
-add_compile_options(-std=c++11)
-
-# Add header file include directories
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/rtmp)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/util)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/audio)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/player)
-
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(audio)
-ADD_SUBDIRECTORY(rtmp)
-ADD_SUBDIRECTORY(util)
-ADD_SUBDIRECTORY(player)
+project(rtmp-player)
+add_subdirectory(src bin)
